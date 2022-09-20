@@ -1,3 +1,5 @@
+# Expression_Eval
+A lightwight easy to use expression evaluator library written in vanilla c.
 
 ## Installation
 
@@ -54,6 +56,7 @@ Used for defining funciton.
 + name: the function name (used in evaluation strnig)
 + func: pointer to the actual function in c.
 + parms: the number of paramers that funciton can accept.
+
 ***!!! It is important that u  define function in c with return type float and parameters (flot\*,int) !!!***
 
 ***flaot\* \-> contains list of argemets that is passed***
@@ -148,4 +151,49 @@ int main(){
 }
 ```
 
-Pending .......
+### void register_expression(Expression *exp,char *string) :
+registers the given string in Expression exp. Registering expression just setups and envorienment for calculation to take place.
+It also doesnot make new copy of the char \*string so its important to not subjct char *string to any change when untill future function call returs errro->status to be \__sucess__ or \__failed__ 
+
+### float proceed_next_calculation(Expression *e,Variable_struct *variable,Error *error):
+Unlike expression_eval(), this funciton call can be used to without before hand knowledge of varaibale involved in the process.
+executing proceed_next_calculation() requires to register expression first. If proceed_next_calculation() stumbles upon a unknow variabele it takes an snapshot of the state of calculation
+, sets error->status to \__pending__ and updates Variable_struct *variable  with name of that unkown variable which a user must update variabele->value and feed it back to proceed_next_calculation() for the process to continue.
+#### Example:
+A simple program to ask user for variable value subjected in the expression.
+```c
+#include <stdio.h>
+#include "eqn.h"
+
+int main(){
+    Error error;
+    Expression exp;
+    init_expression(&exp);
+
+    Variable_struct var={NULL,0};
+    char *eqn="2*x-y+1";
+    register_expression(&exp,eqn);
+    float result;
+    while(true){
+        result=proceed_next_calculation(&exp,&var,&error);
+        if(error.status==__pending__){
+            printf("Enter the  value for %s : ",var.name);
+            scanf("%f",&var.value);
+        }else break;
+    }
+    if(error.status==__failed__)printf("%s\n",error.msg);
+    else printf("%s=%f\n",eqn,result);
+
+    /* output:
+        Enter the  value for x : 3
+        Enter the  value for y : 2
+        2*x-y+1=5.000000
+    */
+    return 0;
+}
+```
+***!!!Note:The varaibale values are not deleated by default, to subject new values for variable make sure to call flush_variable()  !!!***
+
+### float flush_variables(Expression *exp) :
+Delete all the variables stored in the Expression exp and init it to new state.
+
